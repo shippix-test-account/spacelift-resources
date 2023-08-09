@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWS CloudFormation Template for EC2 Instance running a sample Express Application
+
+Parameters:
+  pGithubPersonalAccessToken:
+    Type: String
+    Description: Github Personal Access Token (default - github token for shippix-test-account - scope=repo)
+    Default: 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
+  
+  pEC2AMIId:
+    Type: String
+    Description: EC2 AMI Id (default - Amazon Linux 2 AMI (64-bit (x86)), eu-west-1)
+    Default: ami-05a3d90809a151346
+
+  pEC2KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: EC2 Key Pair Name
+
+  pVPCId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC Id
+  
+  pGithubRepoOwner:
+    Type: String
+    Description: Github Repo Owner (default - shippix-test-account)
+    Default: shippix-test-account
+
+  pGithubRepo:
+    Description: Github Repo (default - spacelift-resources)
+    Type: String
+    Default: spacelift-resources
+
+  pPort:
+    Description: Port to run the application on (default - 3000)
+    Type: Number
+    Default: 3000
+
+
+Resources:
+  SecurityGroup:  
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${AWS::StackName}-sg
+      GroupDescription: Security Group for EC2 Instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 8000
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref pVPCId
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties: 
+      ImageId: !Ref pEC2AMIId
+      InstanceType: t2.medium
+      KeyName: !Ref pEC2KeyPair
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum update -y
+          yum install -y docker
+          systemctl start docker
+
+          yum install git -y
+
+          git clone https://oauth2:${pGithubPersonalAccessToken}@github.com/${pGithubRepoOwner}/${pGithubRepo}.git /home/app
+
+          docker build -t app /home/app
+
+          docker run -p ${pPort}:3000 -d app
