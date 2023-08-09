@@ -40,8 +40,8 @@ Resources:
   SecurityGroup:  
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub ${AWS::StackName}-sg-updated
-      GroupDescription: Security Group for EC2 Instance - Trigger Spacelift Update
+      GroupName: !Sub ${AWS::StackName}-sg
+      GroupDescription: Security Group for EC2 Instance
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
