@@ -80,3 +80,9 @@ Resources:
           docker build -t app /home/app
 
           docker run -p ${pPort}:3000 -d app
+
+Outputs:
+  EC2InstancePublicIP:
+    Description: Public IP of the EC2 Instance
+    Value: !GetAtt EC2Instance.PublicIp
+
